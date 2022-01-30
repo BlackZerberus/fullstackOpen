@@ -2,20 +2,18 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 
 // anecdote display component
-const AnecdoteDisplay = ({anecdotes, selected, votes, fnVote, fnAnecdote}) => {
+const AnecdoteDisplay = ({anecdotes, selected, votes, clickVote, getAnecdote}) => {
+  // Button 'vote' props
+  const propsButtonV = {fnClick: clickVote, text: "vote"}
+  // Button 'next anecdote props
+  const propsButtonNA = {fnClick: getAnecdote, text: "next anecdote"}
   return (
     <>
       <h2>Anecdote of the day</h2>
       {anecdotes[selected]}<br />
       has {votes[selected]} votes.<br />
-      <Button
-       fnClick={fnVote}
-       text={"vote"}
-      />
-      <Button
-       fnClick={fnAnecdote}
-       text={"next anecdote"}
-      />
+      <Button {...propsButtonV} />
+      <Button {...propsButtonNA} />
     </>
   )
 }
@@ -40,47 +38,46 @@ const MostVotedDisplay = ({anecdotes, mostVoted, votes}) => {
   return (
     <>
       <h2>Anecdote with most votes</h2>
-      {anecdotes[mostVoted]} has {votes[mostVoted]} votes.
+      {anecdotes[mostVoted]} <br /> has {votes[mostVoted]} votes.
     </>
   )
 }
 
+// App component
 const App = ({anecdotes}) => {
+  // useState hooks
   const [selected, setSelected] = useState(0)
   const [votes, setVotes] = useState(new Array(6).fill(0))
   const [mostVoted, setMostVoted] = useState(-1)
   
+  //get random integer number between 0 and number - 1
   const randomInt = (number) => Math.floor(Math.random() * number)
+  // store in the selected state a random int number
   const getAnecdote = () => {
     setSelected(randomInt(anecdotes.length))
   }
+  // update the amount of votes in the votes state
   const clickVote = () => {
     const updateVotes = [...votes]
     updateVotes[selected]++
     setVotes([...updateVotes])
     checkVotes(updateVotes)
   }
+  //updates the most voted state
   const checkVotes = (values) => {
     const maxVote = Math.max(...values)
     setMostVoted(values.findIndex(element => element === maxVote))
   }
 
+  //AnecdoteDisplay props
+  const propsAnecdoteDisplay = {anecdotes, selected, votes, clickVote, getAnecdote}
+  //MostVotedDisplay props
+  const propsMostVotedDisplay = {anecdotes, mostVoted, votes}
+
   return (
     <div>
-      <AnecdoteDisplay
-       anecdotes={anecdotes}
-       selected={selected}
-       votes={votes}
-       fnVote={clickVote}
-       fnAnecdote={getAnecdote}
-      />
-      <MostVotedDisplay
-        anecdotes={anecdotes}
-        mostVoted={mostVoted}
-        votes={votes}
-      />
-      {/* <h2>Anecdote with most votes</h2>
-      {anecdotes[mostVoted]} has {votes[mostVoted]} votes. */}
+      <AnecdoteDisplay {...propsAnecdoteDisplay} />
+      <MostVotedDisplay {...propsMostVotedDisplay} />
     </div>
   )
 }
