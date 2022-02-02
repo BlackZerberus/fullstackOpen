@@ -1,8 +1,8 @@
 import React, {useState, useEffect} from 'react'
-import axios from 'axios'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import personService from './services/Persons'
 
 const App = () => {
     const [ persons, setPersons ] = useState([])
@@ -12,21 +12,34 @@ const App = () => {
     const [ results, setResults] = useState([])
 
     useEffect(() => {
-        axios.get('http://localhost:3001/persons')
-        .then(res => {
-            setPersons(res.data)
-            setResults(res.data)
+        personService.getAll()
+        .then(persons => {
+            setPersons(persons)
+            setResults(persons)
         })
     }, [])
 
     const addPerson = (event) => {
         event.preventDefault()
         console.log(event.target)
-        persons.some(person => person.name === newName)
-        ?alert(`${newName} is already added to phonebook`)  
-        :setPersons([...persons, {name: newName, number: newPhone}])
-        setNewName('')
-        setNewPhone('')
+        const existsPerson = persons.find(person => person.name === newName)
+        existsPerson
+        ?window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)
+        && personService.update(existsPerson.id, {name: newName, number: newPhone})
+            .then(newPerson => {
+                const data = persons.map(person => person.id !== newPerson.id?person:newPerson)
+                setPersons(data)
+                setResults(data)
+                setNewName('')
+                setNewPhone('')
+            })  
+        :personService.create({name: newName, number: newPhone})
+            .then(newPerson => {
+                setPersons([...persons, newPerson])
+                setResults([...persons, newPerson])
+                setNewName('')
+                setNewPhone('')
+            })
     }
 
     const handleNameChange = (event) => {
@@ -45,7 +58,7 @@ const App = () => {
     
     const propsFilter = {value: search, fnChange: handleSearchChange}
     const propsPersonForm = {fnSubmit: addPerson, nameText: newName, fnName: handleNameChange, numberText: newPhone, fnNumber: handlePhoneChange}
-    const propsPerson = {data: results}
+    const propsPerson = {data: results, setPersons, setResults}
     return (
       <div>
         <h2>Phonebook</h2>
