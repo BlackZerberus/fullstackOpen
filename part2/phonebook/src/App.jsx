@@ -3,6 +3,7 @@ import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
 import personService from './services/Persons'
+import Notification from './components/Notification'
 
 const App = () => {
     const [ persons, setPersons ] = useState([])
@@ -10,6 +11,7 @@ const App = () => {
     const [ newPhone, setNewPhone ] = useState('')
     const [ search, setSearch] = useState('')
     const [ results, setResults] = useState([])
+    const [ notification, setNotification ] = useState(null)
 
     useEffect(() => {
         personService.getAll()
@@ -32,6 +34,18 @@ const App = () => {
                 setResults(data)
                 setNewName('')
                 setNewPhone('')
+            })
+            .catch(async () => {
+                console.log(`Error: Information of ${newName} has already been removed from server`);
+                setNotification({type: 'error', message: `Information of ${newName} has already been removed from server`})
+                const data = await personService.getAll()
+                setPersons(data)
+                setResults(data)
+                setNewName('')
+                setNewPhone('')
+                setTimeout(() => {
+                    setNotification(null)
+                }, 3000)
             })  
         :personService.create({name: newName, number: newPhone})
             .then(newPerson => {
@@ -39,6 +53,10 @@ const App = () => {
                 setResults([...persons, newPerson])
                 setNewName('')
                 setNewPhone('')
+                setNotification({type: "success", message: `Added ${newName}`})
+                setTimeout(() => {
+                    setNotification(null)
+                }, 3000)
             })
     }
 
@@ -58,9 +76,10 @@ const App = () => {
     
     const propsFilter = {value: search, fnChange: handleSearchChange}
     const propsPersonForm = {fnSubmit: addPerson, nameText: newName, fnName: handleNameChange, numberText: newPhone, fnNumber: handlePhoneChange}
-    const propsPerson = {data: results, setPersons, setResults}
+    const propsPerson = {data: results, setPersons, setResults, setNotification}
     return (
       <div>
+        <Notification {...notification} />
         <h2>Phonebook</h2>
         <div>
             <Filter {...propsFilter} />
