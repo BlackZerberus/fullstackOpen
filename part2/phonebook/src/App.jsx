@@ -10,14 +10,12 @@ const App = () => {
     const [ newName, setNewName ] = useState('')
     const [ newPhone, setNewPhone ] = useState('')
     const [ search, setSearch] = useState('')
-    const [ results, setResults] = useState([])
     const [ notification, setNotification ] = useState(null)
 
     useEffect(() => {
         personService.getAll()
         .then(persons => {
             setPersons(persons)
-            setResults(persons)
         })
     }, [])
 
@@ -28,19 +26,20 @@ const App = () => {
         existsPerson
         ?window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)
         && personService.update(existsPerson.id, {name: newName, number: newPhone})
-            .then(newPerson => {
-                const data = persons.map(person => person.id !== newPerson.id?person:newPerson)
+            .then(async () => {
+                const data = await personService.getAll()
                 setPersons(data)
-                setResults(data)
                 setNewName('')
                 setNewPhone('')
             })
-            .catch(async () => {
-                console.log(`Error: Information of ${newName} has already been removed from server`);
-                setNotification({type: 'error', message: `Information of ${newName} has already been removed from server`})
+            .catch(async (error) => {
+                //console.log(error.response)
+                const {name} = error.response.data
+                const errorMsg = error.response.data.error
+                if (name === 'ValidationError') setNotification({type: 'error', message: errorMsg})
+                else setNotification({type: 'error', message: `Information of ${newName} has already been removed from server`})
                 const data = await personService.getAll()
                 setPersons(data)
-                setResults(data)
                 setNewName('')
                 setNewPhone('')
                 setTimeout(() => {
@@ -49,8 +48,11 @@ const App = () => {
             })  
         :personService.create({name: newName, number: newPhone})
             .then(newPerson => {
-                setPersons([...persons, newPerson])
-                setResults([...persons, newPerson])
+                console.log(newPerson)
+                personService.getAll()
+                .then(updatedPersons => {
+                    setPersons(updatedPersons)
+                })
                 setNewName('')
                 setNewPhone('')
                 setNotification({type: "success", message: `Added ${newName}`})
@@ -58,10 +60,17 @@ const App = () => {
                     setNotification(null)
                 }, 3000)
             })
+            .catch((error) => {
+                setNotification({type: "error", message: `${error.response.data.error}`})
+                setTimeout(() => {
+                    setNotification(null)
+                }, 5000)
+                setNewName('')
+                setNewPhone('')
+            })
     }
 
     const handleNameChange = (event) => {
-        console.log(event.target.value)
         setNewName(event.target.value)
     }
 
@@ -71,12 +80,15 @@ const App = () => {
 
     const handleSearchChange = (event) => {
         setSearch(event.target.value)
-        setResults(persons.filter(person => person.name.toLowerCase().includes(search)))
+        personService.searchByName(search)
+        .then(result => {
+            setPersons(result)
+        })
     }
     
     const propsFilter = {value: search, fnChange: handleSearchChange}
     const propsPersonForm = {fnSubmit: addPerson, nameText: newName, fnName: handleNameChange, numberText: newPhone, fnNumber: handlePhoneChange}
-    const propsPerson = {data: results, setPersons, setResults, setNotification}
+    const propsPerson = {data: persons, setPersons, setNotification}
     return (
       <div>
         <Notification {...notification} />

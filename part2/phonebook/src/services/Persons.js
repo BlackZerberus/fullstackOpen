@@ -1,9 +1,14 @@
 import axios from 'axios'
 
-const urlbase = 'http://localhost:3001/persons'
+const urlbase = '/api/persons' //'http://localhost:3001/api/persons'
 
 const getAll = async () => {
     const {data} = await axios.get(urlbase)
+    return data
+}
+
+const searchByName = async (name = '') => {
+    const {data} = await axios.get(`${urlbase}?name=${name}`)
     return data
 }
 
@@ -25,6 +30,7 @@ const clean = async (id) => {
 /* eslint-disable */
 export default {
     getAll,
+    searchByName,
     create,
     update,
     clean
