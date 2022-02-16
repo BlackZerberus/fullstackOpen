@@ -1,9 +1,7 @@
 // imports
 const mongoose = require('mongoose')
-// const uniqueValidator = require('mongoose-unique-validator')
 const { dbConnection } = require('../utils/config')
 
-// const mongoUrl = 'mongodb+srv://fullstack:OTW7kcz43wtGcW2i@cluster0.4ibpr.mongodb.net/bloglist?retryWrites=true&w=majority'
 process.env.NODE_ENV !== 'test' && mongoose.connect(dbConnection)
 
 const blogSchema = new mongoose.Schema({
